@@ -117,33 +117,19 @@ fn prompt_replace_seed() -> Result<bool, ParseError> {
 }
 
 fn prompt_recovery_phrase() -> Result<ZeroingString, ParseError> {
-	let interface = Arc::new(Interface::new("recover")?);
 	let mut phrase = ZeroingString::from("");
-	interface.set_report_signal(Signal::Interrupt, true);
-	interface.set_prompt("phrase> ")?;
 	loop {
 		println!("Please enter your recovery phrase:");
-		let res = interface.read_line()?;
-		match res {
-			ReadResult::Eof => break,
-			ReadResult::Signal(sig) => {
-				if sig == Signal::Interrupt {
-					interface.cancel_read_line()?;
-					return Err(ParseError::CancelledError);
-				}
-			}
-			ReadResult::Input(line) => {
-				if WalletSeed::from_mnemonic(&line).is_ok() {
-					phrase = ZeroingString::from(line);
-					break;
-				} else {
-					println!();
-					println!("Recovery word phrase is invalid.");
-					println!();
-					interface.set_buffer(&line)?;
-				}
-			}
-		}
+	    let mut input = ZeroingString::from("phrase");
+        input=  prompt_password_stdout("phrase: ");
+        if WalletSeed::from_mnemonic(&input).is_ok() {
+             phrase = ZeroingString::from(input);
+             break;
+         } else {
+             println!();
+             println!("Recovery word phrase is invalid.");
+             println!();
+         }
 	}
 	Ok(phrase)
 }
